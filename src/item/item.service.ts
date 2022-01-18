@@ -1,5 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { checkIfValidUUID } from 'src/shared/utils';
 import { Repository } from 'typeorm';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
@@ -36,7 +42,15 @@ export class ItemService {
   }
 
   async remove(id: string) {
-    const item = await this.findOne(id);
-    return this.repository.remove(item);
+    if (checkIfValidUUID(id)) {
+      const item = await this.findOne(id);
+      if (item) {
+        return this.repository.remove(item);
+      } else {
+        throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
+      }
+    } else {
+      throw new HttpException('Invalid Id', HttpStatus.BAD_REQUEST);
+    }
   }
 }
